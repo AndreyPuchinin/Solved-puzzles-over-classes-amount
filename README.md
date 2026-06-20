@@ -1,0 +1,1 @@
+# Solved-puzzles-over-classes-amount
