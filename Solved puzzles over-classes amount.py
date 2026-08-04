@@ -458,15 +458,32 @@ class Menu:
 
         self.printer.print_calculate_header(N, self.input_mode)
 
-        cliques = {}
+        # ★ ИЗМЕНЕНО: собираем списки клик для каждого размера
+        cliques_by_size = {}
         total_sum = 0
+        
         for k in groups:
-            c = self._count_cliques_of_size(k)
-            cliques[k] = c
-            total_sum += c
+            # Собираем все клики размера k
+            cliques_list = []
+            for subset in itertools.combinations(self.nodes, k):
+                is_clique = True
+                for i in range(k):
+                    for j in range(i + 1, k):
+                        key = self._normalize_edge(subset[i], subset[j])
+                        if key not in self.graph_edges:
+                            is_clique = False
+                            break
+                    if not is_clique:
+                        break
+                if is_clique:
+                    cliques_list.append(subset)
+            
+            cliques_by_size[k] = cliques_list
+            total_sum += len(cliques_list)
 
+        # LaTeX-формула
         if N <= 8:
-            terms = [f"\\omega_{{{k}}}={cliques[k]}" for k in groups]
+            terms = [f"\\omega_{{{k}}}={len(cliques_by_size[k])}" for k in groups]
             latex = "S = " + " + ".join(terms)
         else:
             start = [f"\\omega_{{{k}}}" for k in groups[:3]]
@@ -474,12 +491,18 @@ class Menu:
             latex = "S = " + " + ".join(start) + " + \\dots + " + " + ".join(end)
         self.printer.print_latex(latex)
 
-        self.printer.print_table_header()
+        # вывод списков клик для каждого размера
+        total_possible_sum = 0
         for k in groups:
             en, ru = self._get_combination_name(k)
-            self.printer.print_table_row(k, en, ru, cliques[k])
-        self.printer.print_table_sum(total_sum)
+            total_possible = math.comb(N, k)
+            self.printer.print_clique_list(
+                k, en, ru, cliques_by_size[k], total_possible)
+            total_possible_sum += total_possible
 
+        self.printer.print_total_sum(total_sum, total_possible_sum)
+
+        # Проверка формулой 2^N - 1 для полного графа
         max_edges = N * (N - 1) // 2
         is_complete = len(self.graph_edges) == max_edges
         if is_complete:
@@ -487,6 +510,7 @@ class Menu:
             self.printer.print_check_formula(fast)
             self.notify_note(self.printer.fmt_note_full_range_check())
 
+        # Статистика графа
         degree = {}
         for node in self.nodes:
             degree[node] = 0

@@ -299,6 +299,44 @@ class Printer:
         print(latex)
         self._line("-")
 
+    # вывод списка клик для одного размера
+    def print_clique_list(self, k: int, en_name: str, ru_name: str, 
+                          cliques: list, total_possible: int):
+        """
+        Выводит список клик размера k.
+        cliques: список кортежей вершин
+        total_possible: общее количество возможных комбинаций размера k
+        """
+        count = len(cliques)
+        self._bi(f"{en_name} / {ru_name}: {count} из {total_possible}", "")
+        
+        if cliques:
+            # Форматируем каждую клику
+            formatted = []
+            for clique in cliques:
+                # Сортируем вершины внутри клики для единообразия
+                sorted_clique = sorted(clique, key=str)
+                # Форматируем каждую вершину
+                parts = [self._format_node_for_list(v) for v in sorted_clique]
+                # Соединяем через дефис
+                formatted.append("-".join(parts))
+            
+            # Выводим список через запятую
+            print("  " + ",\n  ".join(formatted))
+        print()
+
+    def _format_node_for_list(self, v):
+        """Форматирует вершину для списка: всегда в кавычках."""
+        return f'"{v}"'
+
+    def print_total_sum(self, total: int, total_possible: int):
+        self._line()
+        self._bi(f"Total sum / Общая сумма: {total}", "")
+        self._bi(f"Total possible sum / Общая возможная сумма: {total_possible}", "")
+        self._bi(f"% of fillness / % заполнения: {total/(total_possible*100)} %", "")
+        self._line()
+        print()
+
     def print_table_header(self):
         print(f"\n{'k':<4} | {'EN Name':<12} | {'RU Name':<10} | {'ω_k (cliques)':<15}")
         print("-" * 53)
