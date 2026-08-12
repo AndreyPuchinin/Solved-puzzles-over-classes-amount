@@ -500,7 +500,7 @@ class Menu:
                 k, en, ru, cliques_by_size[k], total_possible)
             total_possible_sum += total_possible
 
-        self.printer.print_total_sum(total_sum, total_possible_sum)
+        self.printer.print_total_sum(total_s3um, total_possible_sum)
 
         # Проверка формулой 2^N - 1 для полного графа
         max_edges = N * (N - 1) // 2

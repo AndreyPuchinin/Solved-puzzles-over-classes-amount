@@ -333,7 +333,7 @@ class Printer:
         self._line()
         self._bi(f"Total sum / Общая сумма: {total}", "")
         self._bi(f"Total possible sum / Общая возможная сумма: {total_possible}", "")
-        self._bi(f"% of fillness / % заполнения: {total/(total_possible*100)} %", "")
+        self._bi(f"% of fillness / % заполнения: {total/(total_possible/100)} %", "")
         self._line()
         print()
 
