@@ -416,6 +416,7 @@ class Menu:
                 return 'main'
 
     def section_view_graph(self):
+        self.printer.start_file_recording()
         self.printer.print_view_header()
         self.printer.print_graph_stats(
             self.input_mode, len(self.edges), len(self.graph_edges), len(self.nodes))
@@ -445,12 +446,15 @@ class Menu:
 
         self.show_notifications()
         self.printer.print_press_enter()
+        self.printer.stop_file_recording()
         return 'main'
 
     def section_calculate(self):
+        self.printer.start_file_recording()
         if not self.nodes:
             self.printer.print_nothing_to_calculate()
             self.printer.print_press_enter()
+            self.printer.stop_file_recording()
             return 'main'
 
         N = len(self.nodes)
@@ -500,7 +504,7 @@ class Menu:
                 k, en, ru, cliques_by_size[k], total_possible)
             total_possible_sum += total_possible
 
-        self.printer.print_total_sum(total_s3um, total_possible_sum)
+        self.printer.print_total_sum(total_sum, total_possible_sum)
 
         # Проверка формулой 2^N - 1 для полного графа
         max_edges = N * (N - 1) // 2
@@ -522,6 +526,7 @@ class Menu:
             {self._format_node(k): v for k, v in sorted(degree.items(), key=lambda x: str(x[0]))})
 
         self.printer.print_press_enter()
+        self.printer.stop_file_recording()
         return 'main'
 
     def section_reset(self):

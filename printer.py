@@ -6,9 +6,14 @@ class Printer:
     Класс вывода сообщений.
     """
 
-    def __init__(self):
+    def __init__(self, output_file: str = "printer_output.txt"):
         self._last_input_time: datetime = None
+        self._last_input_value = ""
+        self._record_to_file = False
         self._notifier = None
+        self._output_file = output_file
+        with open(self._output_file, "w", encoding="utf-8"):
+            pass
 
     def set_notifier(self, notifier):
         """Привязывает менеджер уведомлений для автоочистки после вывода."""
@@ -24,20 +29,37 @@ class Printer:
     def now(self) -> datetime:
         return datetime.now()
 
+    def _print(self, *args, **kwargs):
+        print(*args, **kwargs)
+        if self._record_to_file:
+            with open(self._output_file, "a", encoding="utf-8") as output_file:
+                print(*args, file=output_file, **kwargs)
+
+    def _data_print(self, *args, **kwargs):
+        print(*args, **kwargs)
+        self._file_print(*args, **kwargs)
+
+    def _file_print(self, *args, **kwargs):
+        with open(self._output_file, "a", encoding="utf-8") as output_file:
+            print(*args, file=output_file, **kwargs)
+
     def ask(self, prompt: str) -> str:
         self._last_input_time = self.now()
-        value = input(prompt)
+        self._print(prompt, end="", flush=True)
+        value = input()
+        self._last_input_value = value
+        self._print()
         display = value if value else "[пусто / empty]"
-        print(f"  📝 [{self._fmt_time(self._last_input_time)}] You entered / Вы ввели: {display}")
+        self._print(f"  📝 [{self._fmt_time(self._last_input_time)}] You entered / Вы ввели: {display}")
         return value
 
     def _line(self, char: str = "=", width: int = 65):
-        print(char * width)
+        self._print(char * width)
 
     def _bi(self, en: str, ru: str = None):
-        print(f"  {en}")
+        self._print(f"  {en}")
         if ru:
-            print(f"  {ru}")
+            self._print(f"  {ru}")
 
     def _fmt_time(self, t: datetime) -> str:
         return t.strftime("%H:%M:%S") if t else "??:??:??"
@@ -46,16 +68,16 @@ class Printer:
     # Запуск / завершение
     # ============================================================
     def print_program_start(self):
-        print()
+        self._print()
         self._line()
-        print(" 🚀 Starting Dependency Graph Calculator...")
-        print(" 🚀 Запуск Калькулятора Графа Зависимостей...")
+        self._print(" 🚀 Starting Dependency Graph Calculator...")
+        self._print(" 🚀 Запуск Калькулятора Графа Зависимостей...")
         self._line()
 
     def print_program_end(self):
-        print()
+        self._print()
         self._line()
-        print(" 👋 Goodbye! / До свидания!")
+        self._print(" 👋 Goodbye! / До свидания!")
         self._line()
 
     def print_press_enter(self):
@@ -65,10 +87,10 @@ class Printer:
     # Главное меню (★ ИЗМЕНЁН: добавлен пункт 6 "Reset graph")
     # ============================================================
     def print_main_menu_header(self):
-        print()
+        self._print()
         self._line()
-        print(" 🌐 DEPENDENCY GRAPH CALCULATOR")
-        print(" 🌐 КАЛЬКУЛЯТОР ГРАФА ЗАВИСИМОСТЕЙ")
+        self._print(" 🌐 DEPENDENCY GRAPH CALCULATOR")
+        self._print(" 🌐 КАЛЬКУЛЯТОР ГРАФА ЗАВИСИМОСТЕЙ")
         self._line()
 
     # ★ ИЗМЕНЁН: теперь показывает статистику графа, а не только ввода
@@ -84,52 +106,66 @@ class Printer:
             display = "✅ INCLUDE (ВКЛЮЧЕНИЕ)"
         else:
             display = "✅ EXCLUDE (ИСКЛЮЧЕНИЕ)"
-        print(f"\n  Input mode / Режим ввода: {display}")
+        self._print(f"\n  Input mode / Режим ввода: {display}")
 
     # ★ ИЗМЕНЁН: добавлен пункт [6]
     def print_main_menu_items(self):
-        print()
+        self._print()
         self._line("-")
-        print("  [1] 🎯 Set input mode (INCLUDE / EXCLUDE edges)")
-        print("      Задать режим ввода (НУЖНЫЕ / НЕНУЖНЫЕ рёбра)")
-        print("  [2] ✍️  Enter edges MANUALLY")
-        print("      Ввести рёбра ВРУЧНУЮ")
-        print("  [3] 📄 Load edges from JSON FILE")
-        print("      Загрузить рёбра из JSON-ФАЙЛА")
-        print("  [4] 👁️  View current graph & notifications")
-        print("      Просмотр текущего графа и уведомлений")
-        print("  [5] 🧮 CALCULATE graph statistics")
-        print("      РАССЧИТАТЬ статистику графа")
-        print("  [6] 🔄 RESET graph (clear all data)")
-        print("      СБРОСИТЬ граф (очистить все данные)")
-        print("  [0] 🚪 EXIT program / ВЫЙТИ из программы")
+        self._print("  [1] 🎯 Set input mode (INCLUDE / EXCLUDE edges)")
+        self._print("      Задать режим ввода (НУЖНЫЕ / НЕНУЖНЫЕ рёбра)")
+        self._print("  [2] ✍️  Enter edges MANUALLY")
+        self._print("      Ввести рёбра ВРУЧНУЮ")
+        self._print("  [3] 📄 Load edges from JSON FILE")
+        self._print("      Загрузить рёбра из JSON-ФАЙЛА")
+        self._print("  [4] 👁️  View current graph & notifications")
+        self._print("      Просмотр текущего графа и уведомлений")
+        self._print("  [5] 🧮 CALCULATE graph statistics")
+        self._print("      РАССЧИТАТЬ статистику графа")
+        self._print("  [6] 🔄 RESET graph (clear all data)")
+        self._print("      СБРОСИТЬ граф (очистить все данные)")
+        self._print("  [0] 🚪 EXIT program / ВЫЙТИ из программы")
         self._line("-")
 
     def ask_main_menu_choice(self) -> str:
-        return self.ask("👉 Your choice / Ваш выбор: ").strip()
+        choice = self.ask("👉 Your choice / Ваш выбор: ").strip()
+        if choice in {"4", "5"}:
+            self._file_print("👉 Your choice / Ваш выбор: ")
+            display = self._last_input_value or "[пусто / empty]"
+            self._file_print(
+                f"  📝 [{self._fmt_time(self._last_input_time)}] "
+                f"You entered / Вы ввели: {display}")
+            self.start_file_recording()
+        return choice
+
+    def start_file_recording(self):
+        self._record_to_file = True
+
+    def stop_file_recording(self):
+        self._record_to_file = False
 
     # ============================================================
     # Выбор режима ввода
     # ============================================================
     def print_mode_selection_header(self):
-        print()
+        self._print()
         self._line()
-        print(" 🎯 INPUT MODE SELECTION / ВЫБОР РЕЖИМА ВВОДА")
+        self._print(" 🎯 INPUT MODE SELECTION / ВЫБОР РЕЖИМА ВВОДА")
         self._line()
         self._bi("Choose how to treat the edges you specify:",
                  "Выберите, как обрабатывать указанные рёбра:")
-        print()
+        self._print()
 
     def print_mode_selection_items(self):
-        print("  [1] INCLUDE mode / Режим ВКЛЮЧЕНИЯ")
+        self._print("  [1] INCLUDE mode / Режим ВКЛЮЧЕНИЯ")
         self._bi("    → Count ONLY the edges you specify.",
                  "    → Учитывать ТОЛЬКО указанные рёбра.")
-        print()
-        print("  [2] EXCLUDE mode / Режим ИСКЛЮЧЕНИЯ")
+        self._print()
+        self._print("  [2] EXCLUDE mode / Режим ИСКЛЮЧЕНИЯ")
         self._bi("    → Count ALL edges EXCEPT those you specify.",
                  "    → Учитывать ВСЕ рёбра, КРОМЕ указанных.")
-        print()
-        print("  [0] ⬅️  BACK / НАЗАД")
+        self._print()
+        self._print("  [0] ⬅️  BACK / НАЗАД")
         self._line("-")
 
     def ask_mode_choice(self) -> str:
@@ -137,17 +173,17 @@ class Printer:
 
     def print_mode_set(self, mode: str):
         if mode == 'include':
-            print("✅ Mode set to INCLUDE. / ✅ Режим установлен: ВКЛЮЧЕНИЕ.")
+            self._print("✅ Mode set to INCLUDE. / ✅ Режим установлен: ВКЛЮЧЕНИЕ.")
         else:
-            print("✅ Mode set to EXCLUDE. / ✅ Режим установлен: ИСКЛЮЧЕНИЕ.")
+            self._print("✅ Mode set to EXCLUDE. / ✅ Режим установлен: ИСКЛЮЧЕНИЕ.")
 
     # ============================================================
     # Ручной ввод рёбер (★ ИЗМЕНЁН: показывает статистику графа)
     # ============================================================
     def print_manual_input_header(self):
-        print()
+        self._print()
         self._line()
-        print(" ✍️  MANUAL EDGE INPUT / РУЧНОЙ ВВОД РЁБЕР")
+        self._print(" ✍️  MANUAL EDGE INPUT / РУЧНОЙ ВВОД РЁБЕР")
         self._line()
 
     def print_manual_input_format(self):
@@ -159,12 +195,12 @@ class Printer:
                  "  1 вершина в скобках = изолированная вершина")
         self._bi("  2 nodes = edge, 3+ nodes = clique (all pairwise edges)",
                  "  2 вершины = ребро, 3+ вершин = клика (все попарные рёбра)")
-        print()
+        self._print()
 
     def print_manual_input_example(self):
         self._bi("Examples / Примеры:",
                  "  (1 2) (\"a\" \"b\") (3) (\"x\", \"y\", \"z\")")
-        print()
+        self._print()
 
     def print_manual_input_hints(self):
         self._bi("[0] or 'back' ⬅️  BACK / НАЗАД",
@@ -176,26 +212,26 @@ class Printer:
 
     # ★ ИЗМЕНЁН: показывает статистику графа, а не только ввода
     def print_edges_added(self, added: int, total_input: int, graph_edges: int):
-        print(f"\n✅ Added {added} edge(s). Total input: {total_input}.")
-        print(f"✅ Добавлено {added} ребер. Всего введено: {total_input}.")
-        print(f"📊 Edges in graph / Рёбер в графе: {graph_edges}")
+        self._print(f"\n✅ Added {added} edge(s). Total input: {total_input}.")
+        self._print(f"✅ Добавлено {added} ребер. Всего введено: {total_input}.")
+        self._print(f"📊 Edges in graph / Рёбер в графе: {graph_edges}")
 
     def print_unique_nodes(self, count: int):
-        print(f"📊 Unique nodes / Уникальных узлов: {count}")
+        self._print(f"📊 Unique nodes / Уникальных узлов: {count}")
 
     def print_no_valid_edges(self):
-        print("⚠️ No valid edges added. Try again. / ⚠️ Ни одного корректного ребра не добавлено. Попробуйте снова.")
+        self._print("⚠️ No valid edges added. Try again. / ⚠️ Ни одного корректного ребра не добавлено. Попробуйте снова.")
 
     def print_all_cleared(self):
-        print("🗑️ All edges cleared. / 🗑️ Все рёбра очищены.")
+        self._print("🗑️ All edges cleared. / 🗑️ Все рёбра очищены.")
 
     # ============================================================
     # JSON-ввод (★ ИЗМЕНЁН: показывает статистику графа)
     # ============================================================
     def print_json_input_header(self):
-        print()
+        self._print()
         self._line()
-        print(" 📄 LOAD FROM JSON / ЗАГРУЗКА ИЗ JSON")
+        self._print(" 📄 LOAD FROM JSON / ЗАГРУЗКА ИЗ JSON")
         self._line()
 
     def print_json_format(self):
@@ -218,22 +254,22 @@ class Printer:
 
     # ★ ИЗМЕНЁН: показывает статистику графа
     def print_json_loaded(self, count: int, path: str, total_input: int, graph_edges: int, nodes: int):
-        print(f"\n✅ Loaded {count} edge(s) from {path}.")
-        print(f"✅ Загружено {count} ребер из {path}.")
-        print(f"📊 Total input / Всего введено: {total_input}")
-        print(f"📊 Edges in graph / Рёбер в графе: {graph_edges}")
-        print(f"📊 Unique nodes / Уникальных узлов: {nodes}")
+        self._print(f"\n✅ Loaded {count} edge(s) from {path}.")
+        self._print(f"✅ Загружено {count} ребер из {path}.")
+        self._print(f"📊 Total input / Всего введено: {total_input}")
+        self._print(f"📊 Edges in graph / Рёбер в графе: {graph_edges}")
+        self._print(f"📊 Unique nodes / Уникальных узлов: {nodes}")
 
     def print_no_json_edges(self):
-        print("⚠️ No valid edges loaded. / ⚠️ Ни одного корректного ребра не загружено.")
+        self._print("⚠️ No valid edges loaded. / ⚠️ Ни одного корректного ребра не загружено.")
 
     # ============================================================
     # Просмотр графа
     # ============================================================
     def print_view_header(self):
-        print()
+        self._print()
         self._line()
-        print(" 👁️  CURRENT GRAPH STATE / ТЕКУЩЕЕ СОСТОЯНИЕ ГРАФА")
+        self._print(" 👁️  CURRENT GRAPH STATE / ТЕКУЩЕЕ СОСТОЯНИЕ ГРАФА")
         self._line()
 
     def print_graph_stats(self, mode, edges_input: int, graph_edges: int, nodes_count: int):
@@ -244,46 +280,46 @@ class Printer:
         self._bi(f"Unique nodes / Уникальных узлов: {nodes_count}", "")
 
     def print_edges_list(self, edges):
-        print("\n  Edges / Рёбра:")
-        print("  " + "-" * 60)
+        self._print("\n  Edges / Рёбра:")
+        self._print("  " + "-" * 60)
         for i, (u, v) in enumerate(edges, 1):
-            print(f"    [{i:>2}] ({u} -> {v})")
-        print("  " + "-" * 60)
+            self._print(f"    [{i:>2}] ({u} -> {v})")
+        self._print("  " + "-" * 60)
 
     def print_isolated_nodes(self, nodes):
-        print("\n  Isolated nodes / Изолированные вершины:")
-        print("  " + "-" * 60)
+        self._print("\n  Isolated nodes / Изолированные вершины:")
+        self._print("  " + "-" * 60)
         for i, node in enumerate(nodes, 1):
-            print(f"    [{i:>2}] {node}")
-        print("  " + "-" * 60)
+            self._print(f"    [{i:>2}] {node}")
+        self._print("  " + "-" * 60)
 
     def print_node_degrees(self, degrees: dict):
-        print("\n  Node degrees / Степени узлов:")
-        print("  " + "-" * 60)
+        self._print("\n  Node degrees / Степени узлов:")
+        self._print("  " + "-" * 60)
         for node in sorted(degrees.keys()):
             self._bi(f"    Node {node}: degree {degrees[node]}",
                      f"    Узел {node}: степень {degrees[node]}")
-        print("  " + "-" * 60)
+        self._print("  " + "-" * 60)
 
     def print_no_edges_yet(self):
-        print("\n  ⚠️ No edges yet. Add some via manual input or JSON.")
-        print("  ⚠️ Рёбер пока нет. Добавьте их через ручной ввод или JSON.")
+        self._print("\n  ⚠️ No edges yet. Add some via manual input or JSON.")
+        self._print("  ⚠️ Рёбер пока нет. Добавьте их через ручной ввод или JSON.")
 
     # ============================================================
     # Расчёт
     # ============================================================
     def print_nothing_to_calculate(self):
-        print()
+        self._print()
         self._line()
-        print(" ⚠️ NOTHING TO CALCULATE / НЕЧЕГО СЧИТАТЬ")
+        self._print(" ⚠️ NOTHING TO CALCULATE / НЕЧЕГО СЧИТАТЬ")
         self._line()
         self._bi("No edges loaded. Please add edges first.",
                  "Рёбра не загружены. Сначала добавьте рёбра.")
 
     def print_calculate_header(self, N: int, mode):
-        print()
+        self._print()
         self._line()
-        print(f" 🧮 CLIQUE COUNTING / ПОДСЧЁТ КЛИК  (N = {N})")
+        self._print(f" 🧮 CLIQUE COUNTING / ПОДСЧЁТ КЛИК  (N = {N})")
         self._line()
         self._bi(f"Number of unique types (nodes) / Количество уникальных типов (узлов): {N}", "")
         mode_str = "INCLUDE" if mode == 'include' or mode is None else "EXCLUDE"
@@ -292,12 +328,12 @@ class Printer:
                  "Подсчёт клик (полных подграфов) для всех размеров от 1 до N.")
 
     def print_latex(self, latex: str):
-        print()
-        self._line("-")
-        print("📐 LaTeX formula / LaTeX-формула:")
-        self._line("-")
-        print(latex)
-        self._line("-")
+        self._data_print()
+        self._data_print("-" * 65)
+        self._data_print("📐 LaTeX formula / LaTeX-формула:")
+        self._data_print("-" * 65)
+        self._data_print(latex)
+        self._data_print("-" * 65)
 
     # вывод списка клик для одного размера
     def print_clique_list(self, k: int, en_name: str, ru_name: str, 
@@ -308,7 +344,7 @@ class Printer:
         total_possible: общее количество возможных комбинаций размера k
         """
         count = len(cliques)
-        self._bi(f"{en_name} / {ru_name}: {count} из {total_possible}", "")
+        self._data_print(f"  {en_name} / {ru_name}: {count} из {total_possible}")
         
         if cliques:
             # Форматируем каждую клику
@@ -322,56 +358,56 @@ class Printer:
                 formatted.append("-".join(parts))
             
             # Выводим список через запятую
-            print("  " + ",\n  ".join(formatted))
-        print()
+            self._data_print("  " + ",\n  ".join(formatted))
+        self._data_print()
 
     def _format_node_for_list(self, v):
         """Форматирует вершину для списка: всегда в кавычках."""
         return f'"{v}"'
 
     def print_total_sum(self, total: int, total_possible: int):
-        self._line()
-        self._bi(f"Total sum / Общая сумма: {total}", "")
-        self._bi(f"Total possible sum / Общая возможная сумма: {total_possible}", "")
-        self._bi(f"% of fillness / % заполнения: {total/(total_possible/100)} %", "")
-        self._line()
-        print()
+        self._data_print("=" * 65)
+        self._data_print(f"  Total sum / Общая сумма: {total}")
+        self._data_print(f"  Total possible sum / Общая возможная сумма: {total_possible}")
+        self._data_print(f"  % of fillness / % заполнения: {total/(total_possible/100)} %")
+        self._data_print("=" * 65)
+        self._data_print()
 
     def print_table_header(self):
-        print(f"\n{'k':<4} | {'EN Name':<12} | {'RU Name':<10} | {'ω_k (cliques)':<15}")
-        print("-" * 53)
+        self._data_print(f"\n{'k':<4} | {'EN Name':<12} | {'RU Name':<10} | {'ω_k (cliques)':<15}")
+        self._data_print("-" * 53)
 
     def print_table_row(self, k: int, en: str, ru: str, c: int):
-        print(f"{k:<4} | {en:<12} | {ru:<10} | {c:<15}")
+        self._data_print(f"{k:<4} | {en:<12} | {ru:<10} | {c:<15}")
 
     def print_table_sum(self, total: int):
-        print("-" * 53)
-        print(f"{'SUM':<4} | {'Total':<12} | {'Сумма':<10} | {total:<15}")
-        self._line()
+        self._data_print("-" * 53)
+        self._data_print(f"{'SUM':<4} | {'Total':<12} | {'Сумма':<10} | {total:<15}")
+        self._data_print("=" * 65)
 
     def print_check_formula(self, fast: int):
-        print(f"\n✅ Graph is complete! Check (2^N - 1): {fast}")
-        print(f"✅ Граф полный! Проверка (2^N - 1): {fast}")
+        self._data_print(f"\n✅ Graph is complete! Check (2^N - 1): {fast}")
+        self._data_print(f"✅ Граф полный! Проверка (2^N - 1): {fast}")
 
     def print_graph_statistics(self, N: int, edges_count: int, degrees: dict):
-        print("\n📊 Graph statistics / Статистика графа:")
-        self._bi(f"  N (unique nodes) / N (уникальных узлов): {N}",
-                 f"  Edges in graph / Рёбер в графе: {edges_count}")
+        self._data_print("\n📊 Graph statistics / Статистика графа:")
+        self._data_print(f"  N (unique nodes) / N (уникальных узлов): {N}")
+        self._data_print(f"  Edges in graph / Рёбер в графе: {edges_count}")
         if degrees:
-            print("  " + "-" * 60)
-            print("  Node degrees / Степени узлов:")
+            self._data_print("  " + "-" * 60)
+            self._data_print("  Node degrees / Степени узлов:")
             for node in sorted(degrees.keys()):
-                self._bi(f"    Node {node}: degree {degrees[node]}",
-                         f"    Узел {node}: степень {degrees[node]}")
-            print("  " + "-" * 60)
+                self._data_print(f"    Node {node}: degree {degrees[node]}")
+                self._data_print(f"    Узел {node}: степень {degrees[node]}")
+            self._data_print("  " + "-" * 60)
 
     # ============================================================
     # Сброс графа (★ НОВОЕ)
     # ============================================================
     def print_reset_done(self):
-        print()
+        self._print()
         self._line()
-        print(" 🔄 GRAPH RESET COMPLETE / ГРАФ СБРОШЕН")
+        self._print(" 🔄 GRAPH RESET COMPLETE / ГРАФ СБРОШЕН")
         self._line()
         self._bi("All edges, nodes, mode and notifications have been cleared.",
                  "Все рёбра, узлы, режим и уведомления очищены.")
@@ -387,9 +423,9 @@ class Printer:
         if not has_any:
             return
 
-        print()
+        self._print()
         self._line()
-        print(" 📋 Notifications / Уведомления:")
+        self._print(" 📋 Notifications / Уведомления:")
         self._line()
 
         order = [
@@ -403,14 +439,14 @@ class Printer:
             items = all_notifications.get(key, [])
             if not items:
                 continue
-            print(f"  [{title}]")
+            self._print(f"  [{title}]")
             local_idx = 1
             for ts, msg in items:
-                print(f"    {local_idx:>2}. [{self._fmt_time(ts)}] {msg}")
+                self._print(f"    {local_idx:>2}. [{self._fmt_time(ts)}] {msg}")
                 local_idx += 1
-            print()
+            self._print()
         self._line()
-        print()
+        self._print()
 
         if self._notifier is not None:
             self._notifier.clear_all()
@@ -425,9 +461,10 @@ class Printer:
     def fmt_duplicate_isolated(self, v) -> str:
         return (f"Duplicate isolated node: {v}. "
                 f"Дубликат изолированной вершины: {v}.")
-        def fmt_invalid_choice(self, choice: str) -> str:
-            return (f"Invalid choice '{choice}'. Please enter 0-6. "
-                    f"Неверный выбор '{choice}'. Введите 0-6.")
+
+    def fmt_invalid_choice(self, choice: str) -> str:
+        return (f"Invalid choice '{choice}'. Please enter 0-6. "
+                f"Неверный выбор '{choice}'. Введите 0-6.")
 
     def fmt_invalid_mode_choice(self, choice: str) -> str:
         return (f"Invalid choice '{choice}'. Enter 0, 1 or 2. "
@@ -510,32 +547,32 @@ class Printer:
 
     # --- Предупреждения интерфейса ---
     def print_invalid_input_retry(self):
-        print("⚠️ Invalid input. Try again. / ⚠️ Неверный ввод. Попробуйте снова.")
+        self._print("⚠️ Invalid input. Try again. / ⚠️ Неверный ввод. Попробуйте снова.")
 
     def print_invalid_y_n(self):
-        print("⚠️ Invalid input. Please enter 'y' or 'n'.")
-        print("⚠️ Неверный ввод. Пожалуйста, введите 'y' или 'n'.")
+        self._print("⚠️ Invalid input. Please enter 'y' or 'n'.")
+        self._print("⚠️ Неверный ввод. Пожалуйста, введите 'y' или 'n'.")
 
     def print_parsing_errors_header(self):
-        print("\n⚠️ Parsing errors / Ошибки разбора:")
+        self._print("\n⚠️ Parsing errors / Ошибки разбора:")
 
     def print_error_line(self, msg: str):
-        print(f"  ❌ {msg}")
+        self._print(f"  ❌ {msg}")
 
     def print_cannot_be_empty(self):
-        print("⚠️ Input cannot be empty. / ⚠️ Ввод не может быть пустым.")
+        self._print("⚠️ Input cannot be empty. / ⚠️ Ввод не может быть пустым.")
 
     def print_file_not_found_warning(self, path: str):
-        print(f"⚠️ File not found: {path}. / ⚠️ Файл не найден: {path}.")
+        self._print(f"⚠️ File not found: {path}. / ⚠️ Файл не найден: {path}.")
 
     def print_invalid_json_warning(self, err):
-        print(f"⚠️ Invalid JSON: {err}. / ⚠️ Некорректный JSON: {err}.")
+        self._print(f"⚠️ Invalid JSON: {err}. / ⚠️ Некорректный JSON: {err}.")
 
     def print_read_error_warning(self, err):
-        print(f"⚠️ Error reading file: {err}. / ⚠️ Ошибка чтения файла: {err}.")
+        self._print(f"⚠️ Error reading file: {err}. / ⚠️ Ошибка чтения файла: {err}.")
 
     def print_no_edges_array_warning(self):
-        print("⚠️ JSON must contain 'edges' array. / ⚠️ JSON должен содержать массив 'edges'.")
+        self._print("⚠️ JSON must contain 'edges' array. / ⚠️ JSON должен содержать массив 'edges'.")
 
     def print_some_edges_had_errors(self):
-        print("\n⚠️ Some edges had errors / Некоторые рёбра с ошибками:")
+        self._print("\n⚠️ Some edges had errors / Некоторые рёбра с ошибками:")
